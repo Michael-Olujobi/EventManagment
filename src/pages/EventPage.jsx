@@ -177,7 +177,7 @@ export default function EventPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         <FaMapMarkerAlt className="text-white" />
-                        <span>Online / Location TBA</span>
+                        <span>{event.location || "Location TBA"}</span>
                     </div>
                 </div>
             </div>

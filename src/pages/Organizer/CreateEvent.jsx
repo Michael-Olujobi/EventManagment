@@ -13,6 +13,8 @@ export default function CreateEvent() {
   const [image, setImage] = useState(null)
   const [preview, setPreview] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [isOnline, setIsOnline] = useState(false)
+  const [location, setLocation] = useState('')
 
   const [tickets, setTickets] = useState([
     { name: 'General Admission', price: 0, currency: 'NGN', quantity_total: 100, is_free: false }
@@ -82,6 +84,10 @@ export default function CreateEvent() {
       let imageUrl = null;
       if (image) imageUrl = await uploadToImgBB(image);
 
+      // Calculate min price
+      const paidTickets = tickets.filter(t => !t.is_free && t.price > 0);
+      const minPrice = paidTickets.length > 0 ? Math.min(...paidTickets.map(t => t.price)) : 0;
+      const currency = tickets[0]?.currency || 'NGN';
       // 1. Create Event Doc
       const eventRef = await addDoc(collection(db, "events"), {
         title,
@@ -90,6 +96,10 @@ export default function CreateEvent() {
         start: new Date(start),
         end: new Date(end),
         status: "live",
+        location: isOnline ? "Online Event" : location,
+        isOnline,
+        minPrice,
+        currency,
         organizerId: auth.currentUser.uid, // ✅ Added for dashboard filtering
         createdAt: new Date(),
         revenue: 0,
@@ -164,6 +174,32 @@ export default function CreateEvent() {
                   />
                 </div>
 
+                <div className="space-y-4">
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isOnline}
+                        onChange={e => setIsOnline(e.target.checked)}
+                        className="w-5 h-5 rounded border-gray-300 text-black focus:ring-black"
+                      />
+                      <span className="font-bold text-gray-700">This is an online event</span>
+                    </label>
+                  </div>
+
+                  {!isOnline && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                      <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Location / Venue</label>
+                      <input
+                        value={location}
+                        onChange={e => setLocation(e.target.value)}
+                        placeholder="e.g. Landmark Centre, Victoria Island, Lagos"
+                        className="w-full border border-gray-200 rounded-xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-300 focus:shadow-md text-lg bg-gray-50 focus:bg-white"
+                        required={!isOnline}
+                      />
+                    </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">Start Date & Time</label>
